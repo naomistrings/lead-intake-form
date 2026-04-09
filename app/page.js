@@ -305,9 +305,20 @@ export default function HomePage() {
           fileType: file.type,
         }),
       });
-      const data = await response.json();
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        // If response is not valid JSON, get the text instead
+        const text = await response.text();
+        throw new Error(
+          `API error (${response.status}): ${text.substring(0, 200)}`,
+        );
+      }
+
       if (!response.ok) {
-        throw new Error(data?.error || "Extraction failed");
+        throw new Error(data?.error || `API error (${response.status})`);
       }
       if (!data.parsed) {
         throw new Error(data?.error || "No extracted data returned.");
@@ -532,81 +543,12 @@ export default function HomePage() {
                   placeholder="Select incentive program"
                 />
               </Field>
-              <Field label="Roof type">
-                <Select
-                  value={property.roofType}
-                  onChange={setField("roofType")}
-                  options={ROOF_TYPES}
-                  placeholder="Select roof type"
-                />
-              </Field>
-              <Field label="Heating type">
-                <Select
-                  value={property.heatingType}
-                  onChange={setField("heatingType")}
-                  options={HEATING_TYPES}
-                  placeholder="Select heating type"
-                />
-              </Field>
-              <Field label="Heating fuel">
-                <Select
-                  value={property.heatingFuel}
-                  onChange={setField("heatingFuel")}
-                  options={HEATING_FUELS}
-                  placeholder="Select heating fuel"
-                />
-              </Field>
-              <Field label="Construction">
-                <Select
-                  value={property.constructionType}
-                  onChange={setField("constructionType")}
-                  options={CONSTRUCTION_TYPES}
-                  placeholder="Select construction type"
-                />
-              </Field>
               <Field label="Lead source">
                 <Select
                   value={property.source}
                   onChange={setField("source")}
                   options={SOURCE_OPTIONS}
                   placeholder="Select source"
-                />
-              </Field>
-              <Field label="Company / Owner">
-                <input
-                  style={inputStyle}
-                  value={property.companyName}
-                  onChange={(event) =>
-                    setField("companyName")(event.target.value)
-                  }
-                />
-              </Field>
-              <Field label="Contacts: Email">
-                <input
-                  style={inputStyle}
-                  type="email"
-                  value={property.contactEmail}
-                  onChange={(event) =>
-                    setField("contactEmail")(event.target.value)
-                  }
-                />
-              </Field>
-              <Field label="Contacts: Phone">
-                <input
-                  style={inputStyle}
-                  value={property.contactPhone}
-                  onChange={(event) =>
-                    setField("contactPhone")(event.target.value)
-                  }
-                />
-              </Field>
-              <Field label="Contacts: Address">
-                <input
-                  style={inputStyle}
-                  value={property.contactAddress}
-                  onChange={(event) =>
-                    setField("contactAddress")(event.target.value)
-                  }
                 />
               </Field>
             </div>
@@ -617,7 +559,7 @@ export default function HomePage() {
                 marginTop: 24,
                 width: "100%",
                 background: BRAND.green,
-                color: "#111",
+                color: "#fff",
               }}
               onClick={handleManualSubmit}
               disabled={isSubmitting}
@@ -780,12 +722,6 @@ export default function HomePage() {
           </div>
         )}
 
-        <div style={{ marginBottom: 24, color: PALETTE.textDim, fontSize: 13 }}>
-          Rows are appended immediately to the configured Google Sheet. Uploaded
-          files will set <strong>Properties: Track?</strong> to{" "}
-          <strong>Yes</strong>.
-        </div>
-
         {entries.length > 0 && (
           <div
             style={{
@@ -804,7 +740,7 @@ export default function HomePage() {
               }}
             >
               <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>
-                Recently sent rows
+                Recently sent addresses
               </h2>
               <span style={{ color: PALETTE.textDim, fontSize: 13 }}>
                 {entries.length} appended
