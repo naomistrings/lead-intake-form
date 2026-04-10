@@ -1,159 +1,85 @@
 "use client";
-
 import { useState, useRef } from "react";
 
-const BRAND = { yellow: "#FFD10D", blue: "#1691D0", green: "#8AC660" };
-const PALETTE = {
-  bg: "#0f1117",
-  card: "#181b24",
-  border: "#282d3a",
-  text: "#e2e4ea",
-  textDim: "#8a8f9e",
-  inputBg: "#12141c",
+const TEAM = [
+  "Aadi", "Abby", "Adam", "Alex", "Brendan", "Brian", "Collin",
+  "Jamie", "JD", "Jim", "Kelly", "Kendra", "Lindsey", "Marty",
+  "Mike", "Naomi", "Nicholas", "Pat", "Phillip", "Ryan",
+  "Tom C", "Tom F", "Tom S",
+];
+
+const TAGS = ["Expected Market Rate", "Expected LEAN"];
+const ROOF_TYPES = ["Flat/Built-up", "Gable/Shingle", "Hip", "Mansard", "Gambrel", "Metal", "Rubber membrane", "Unknown"];
+const HEATING_TYPES = ["Forced hot air", "Hot water baseboard", "Steam", "Radiant", "Heat pump", "Electric baseboard", "Unknown"];
+const HEATING_FUELS = ["Natural gas", "Oil", "#2 fuel oil", "#4 fuel oil", "#6 fuel oil", "Electric", "Propane", "Unknown"];
+const CONSTRUCTION_TYPES = ["Wood frame", "Masonry", "Steel frame", "Concrete", "Mixed", "Unknown"];
+
+const EMPTY_PROPERTY = {
+  contactType: "", contactTags: "",
+  address: "", city: "", propertyName: "", units: "",
+  tag: "", roofType: "", heatingType: "", heatingFuel: "",
+  constructionType: "", source: "", contactFirstName: "",
+  contactLastName: "", contactEmail: "", contactPhone: "",
+  contactAddress: "", companyName: "",
+};
+
+const FIELD_MAP = {
+  contactType: "Contact Type",
+  contactTags: "Contacts: Tags",
+  propertyName: "Properties: Property Name",
+  address: "Properties: Address",
+  companyName: "Companies: Company",
+  city: "City",
+  units: "Properties: Units",
+  heatingFuel: "Properties: Heating Fuel",
+  heatingType: "Properties: Heating Type",
+  constructionType: "Properties: Construction Type",
+  roofType: "Properties: Roof Type",
+  contactFirstName: "Contacts: First Name",
+  contactLastName: "Contacts: Last Name",
+  contactEmail: "Contacts: Email",
+  contactPhone: "Contacts: Phone",
+  contactAddress: "Contacts: Address",
+  tag: "Properties: Tags",
+  source: "Source",
+};
+
+const AI_SKIP_FIELDS = new Set([
+  "companyName", "contactType", "contactTags",
+  "contactFirstName", "contactLastName", "contactPhone", "contactEmail",
+]);
+
+const brand = { yellow: "#FFD10D", blue: "#1691D0", green: "#8AC660" };
+const c = {
+  bg: "#0f1117", card: "#181b24", border: "#282d3a",
+  text: "#e2e4ea", textDim: "#8a8f9e", inputBg: "#12141c",
 };
 const font = "system-ui, sans-serif";
 
-const SOURCE_OPTIONS = [
-  "Referral",
-  "Drive-by",
-  "Realtor mailing",
-  "Market research",
-  "Other",
-];
-
-const ROOF_TYPES = [
-  "Flat/Built-up",
-  "Gable/Shingle",
-  "Hip",
-  "Mansard",
-  "Gambrel",
-  "Metal",
-  "Rubber membrane",
-  "Unknown",
-];
-
-const HEATING_TYPES = [
-  "Forced hot air",
-  "Hot water baseboard",
-  "Steam",
-  "Radiant",
-  "Heat pump",
-  "Electric baseboard",
-  "Unknown",
-];
-
-const HEATING_FUELS = [
-  "Natural gas",
-  "Oil",
-  "#2 fuel oil",
-  "#4 fuel oil",
-  "#6 fuel oil",
-  "Electric",
-  "Propane",
-  "Unknown",
-];
-
-const CONSTRUCTION_TYPES = [
-  "Wood frame",
-  "Masonry",
-  "Steel frame",
-  "Concrete",
-  "Mixed",
-  "Unknown",
-];
-
-const INCENTIVE_OPTIONS = [
-  { value: "Expected Market Rate", label: "Market Rate" },
-  { value: "Expected LEAN", label: "LEAN" },
-];
-
-const EMPLOYEE_NAMES = [
-  "Aadi",
-  "Abby",
-  "Adam",
-  "Alex",
-  "Brian",
-  "Brendan",
-  "Colln",
-  "Jamie",
-  "Jim",
-  "JD",
-  "Kelly",
-  "Kendra",
-  "Lindsey",
-  "Marty",
-  "Mike",
-  "Naomi",
-  "Nicholas",
-  "Pat",
-  "Phillip",
-  "Ryan",
-  "Tom C",
-  "Tom F",
-  "Tom S",
-];
-
-const EMPTY_PROPERTY = {
-  address: "",
-  city: "",
-  propertyName: "",
-  units: "",
-  tag: "",
-  roofType: "",
-  heatingType: "",
-  heatingFuel: "",
-  constructionType: "",
-  source: "",
-  companyName: "",
-  contactEmail: "",
-  contactPhone: "",
-  contactAddress: "",
-};
-
 const inputStyle = {
-  fontFamily: font,
-  color: PALETTE.text,
-  boxSizing: "border-box",
-  background: PALETTE.inputBg,
-  border: `1px solid ${PALETTE.border}`,
-  borderRadius: 6,
-  padding: "10px 12px",
-  fontSize: 14,
-  width: "100%",
-  outline: "none",
+  fontFamily: font, color: c.text, boxSizing: "border-box",
+  background: c.inputBg, border: `1px solid ${c.border}`,
+  borderRadius: 6, padding: "8px 12px", fontSize: 14, width: "100%", outline: "none",
 };
 const selectStyle = { ...inputStyle, appearance: "auto" };
 const btnPrimary = {
-  fontFamily: font,
-  color: "#fff",
-  background: BRAND.blue,
-  border: "none",
-  borderRadius: 8,
-  padding: "12px 18px",
-  fontSize: 14,
-  fontWeight: 600,
-  cursor: "pointer",
+  fontFamily: font, color: "#fff", boxSizing: "border-box",
+  background: brand.blue, border: "none", borderRadius: 6,
+  padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer",
 };
 const btnOutline = {
-  ...btnPrimary,
-  background: "transparent",
-  border: `1px solid ${PALETTE.border}`,
-  color: PALETTE.text,
+  ...btnPrimary, background: "transparent",
+  border: `1px solid ${c.border}`, color: c.text,
 };
 const labelStyle = {
-  fontSize: 12,
-  fontWeight: 600,
-  color: PALETTE.textDim,
-  textTransform: "uppercase",
-  letterSpacing: "0.05em",
-  marginBottom: 6,
-  display: "block",
-  fontFamily: font,
+  fontSize: 12, fontWeight: 600, color: c.textDim,
+  textTransform: "uppercase", letterSpacing: "0.05em",
+  marginBottom: 4, display: "block", fontFamily: font,
 };
 
-function Field({ label, children, style }) {
+function Field({ label, children, style: s }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6, ...style }}>
+    <div style={{ display: "flex", flexDirection: "column", ...s }}>
       <span style={labelStyle}>{label}</span>
       {children}
     </div>
@@ -162,485 +88,277 @@ function Field({ label, children, style }) {
 
 function Select({ value, onChange, options, placeholder }) {
   return (
-    <select
-      style={selectStyle}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-    >
+    <select style={selectStyle} value={value} onChange={e => onChange(e.target.value)}>
       <option value="">{placeholder || "Select..."}</option>
-      {options.map((option) => (
-        <option key={option.value ?? option} value={option.value ?? option}>
-          {option.label ?? option}
-        </option>
-      ))}
+      {options.map(o => <option key={o} value={o}>{o}</option>)}
     </select>
   );
 }
 
-export default function HomePage() {
+export default function PropertyIntake() {
   const [employeeName, setEmployeeName] = useState("");
   const [comment, setComment] = useState("");
-  const [mode, setMode] = useState("manual");
+  const [mode, setMode] = useState(null);
   const [property, setProperty] = useState({ ...EMPTY_PROPERTY });
   const [entries, setEntries] = useState([]);
   const [aiStatus, setAiStatus] = useState(null);
   const [aiMessage, setAiMessage] = useState("");
   const [aiExtracted, setAiExtracted] = useState(null);
-  const [operationMessage, setOperationMessage] = useState("");
-  const [purgeMessage, setPurgeMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isPurging, setIsPurging] = useState(false);
-  const fileRef = useRef(null);
+  const [sheetStatus, setSheetStatus] = useState(null);
+  const [sheetMessage, setSheetMessage] = useState("");
+  const fileRef = useRef();
 
   const dateSubmitted = new Date().toISOString().split("T")[0];
-  const setField = (key) => (value) =>
-    setProperty((prev) => ({ ...prev, [key]: value }));
+  const set = (k) => (v) => setProperty(p => ({ ...p, [k]: v }));
 
-  async function appendToSheet(payload) {
-    setIsSubmitting(true);
-    setOperationMessage("Sending row to Google Sheets...");
-
-    try {
-      const response = await fetch("/api/append-sheet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.error || "Append failed");
-      }
-      setEntries((prev) => [{ ...payload, id: Date.now() }, ...prev]);
-      setOperationMessage("Row appended successfully.");
-    } catch (error) {
-      setOperationMessage(`Failed to append row: ${error.message}`);
-      throw error;
-    } finally {
-      setIsSubmitting(false);
-      window.setTimeout(() => setOperationMessage(""), 4000);
-    }
-  }
-
-  async function handleManualSubmit() {
-    if (!property.address) {
-      setOperationMessage("Address is required.");
-      return;
-    }
-    if (!employeeName) {
-      setOperationMessage("Select your name from the dropdown.");
-      return;
-    }
-
-    const payload = {
-      ...property,
-      contactType: "",
-      contactTags: "",
-      employeeName,
-      dateSubmitted,
-      comment,
-      track: "",
-    };
-
-    try {
-      await appendToSheet(payload);
-      setProperty({ ...EMPTY_PROPERTY });
-      setComment("");
-    } catch {
-      // error handled in appendToSheet
-    }
-  }
-
-  async function handlePurgeRows() {
-    const confirmed = window.confirm(
-      "Purge rows older than 30 days from the configured Google Sheet? This cannot be undone.",
-    );
-    if (!confirmed) return;
-
-    setIsPurging(true);
-    setPurgeMessage("Purging old rows...");
-
-    try {
-      const response = await fetch("/api/purge-old", {
-        method: "POST",
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.error || "Purge failed");
-      }
-      setPurgeMessage(`Purged ${data.deletedRows} row(s) older than 30 days.`);
-    } catch (error) {
-      setPurgeMessage(`Purge failed: ${error.message}`);
-    } finally {
-      setIsPurging(false);
-      window.setTimeout(() => setPurgeMessage(""), 6000);
-    }
-  }
-
-  async function handleFileUpload(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setAiStatus("loading");
-    setAiMessage("Reading file...");
+  function switchMode(key) {
+    setMode(key);
+    setAiStatus(null);
     setAiExtracted(null);
+    setSheetStatus(null);
+    setSheetMessage("");
+  }
 
+  function addManualEntry() {
+    if (!property.address) return;
+    setEntries(prev => [...prev, { ...property, source: "Paradigm Employee", employeeName, dateSubmitted, comment }]);
+    setProperty({ ...EMPTY_PROPERTY });
+    setSheetStatus(null);
+  }
+
+  function removeEntry(i) {
+    setEntries(prev => prev.filter((_, idx) => idx !== i));
+  }
+
+  async function callAppendSheet(entriesToSend) {
+    setSheetStatus("loading");
+    setSheetMessage("");
     try {
-      const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result || "";
-          resolve(result.split(",")[1]);
-        };
-        reader.onerror = () => reject(new Error("Unable to read the file."));
-        reader.readAsDataURL(file);
-      });
-
-      setAiMessage("Extracting property data...");
-      const response = await fetch("/api/anthropic", {
+      const resp = await fetch("/api/append-sheet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          base64,
-          fileName: file.name,
-          fileType: file.type,
-        }),
+        body: JSON.stringify({ entries: entriesToSend }),
       });
-
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        // If response is not valid JSON, get the text instead
-        const text = await response.text();
-        throw new Error(
-          `API error (${response.status}): ${text.substring(0, 200)}`,
-        );
-      }
-
-      if (!response.ok) {
-        throw new Error(data?.error || `API error (${response.status})`);
-      }
-      if (!data.parsed) {
-        throw new Error(data?.error || "No extracted data returned.");
-      }
-
-      setAiExtracted({ ...EMPTY_PROPERTY, ...data.parsed });
-      setAiStatus("done");
-      setAiMessage("Extraction complete. Review the extracted property data.");
-    } catch (error) {
-      setAiStatus("error");
-      setAiMessage(error.message || "Unable to extract the file.");
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || `Error ${resp.status}`);
+      const n = entriesToSend.length;
+      setSheetStatus("done");
+      setSheetMessage(`${n} ${n === 1 ? "property" : "properties"} sent to Google Sheets!`);
+      return true;
+    } catch (err) {
+      setSheetStatus("error");
+      setSheetMessage(err.message || "Failed to send to Sheets");
+      return false;
     }
   }
 
-  async function acceptAiData() {
+  async function sendAllEntries() {
+    if (!entries.length) return;
+    const ok = await callAppendSheet(entries);
+    if (ok) setEntries([]);
+  }
+
+  async function acceptAiEntry() {
     if (!aiExtracted) return;
-    if (!employeeName) {
-      setOperationMessage("Select your name before sending AI data.");
-      return;
-    }
-
-    const payload = {
-      ...aiExtracted,
-      contactType: "",
-      contactTags: "",
-      employeeName,
-      dateSubmitted,
-      comment,
-      track: "Yes",
-    };
-
-    try {
-      await appendToSheet(payload);
+    const entry = { ...aiExtracted, employeeName, dateSubmitted, comment };
+    const ok = await callAppendSheet([entry]);
+    if (ok) {
       setAiExtracted(null);
       setAiStatus(null);
       setAiMessage("");
-      setComment("");
-    } catch {
-      // handled above
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  async function handleFileUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAiStatus("loading");
+    setAiMessage("Reading file...");
+    setAiExtracted(null);
+    setSheetStatus(null);
+
+    try {
+      const base64 = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result.split(",")[1]);
+        r.onerror = () => rej(new Error("Failed to read file"));
+        r.readAsDataURL(file);
+      });
+
+      const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+      const mediaType = isPdf ? "application/pdf" : file.type || "image/jpeg";
+
+      setAiMessage("Extracting property data...");
+
+      const userContent = [];
+      if (isPdf) {
+        userContent.push({ type: "document", source: { type: "base64", media_type: mediaType, data: base64 } });
+      } else {
+        userContent.push({ type: "image", source: { type: "base64", media_type: mediaType, data: base64 } });
+      }
+
+      userContent.push({
+        type: "text",
+        text: `You are extracting PROPERTY data from a real estate offering memo for a multifamily property database. Extract only information about the building/property itself — do NOT extract any contact, broker, or company information.
+
+Return ONLY a JSON object (no markdown, no backticks, no explanation) with these exact keys. Use empty string "" for any field you cannot find.
+
+{
+  "propertyName": "property or building name",
+  "address": "full street address of the property",
+  "city": "city name",
+  "units": "total number of residential units as a string",
+  "heatingFuel": "one of: Natural gas, Oil, #2 fuel oil, #4 fuel oil, #6 fuel oil, Electric, Propane, Unknown",
+  "heatingType": "one of: Forced hot air, Hot water baseboard, Steam, Radiant, Heat pump, Electric baseboard, Unknown",
+  "constructionType": "one of: Wood frame, Masonry, Steel frame, Concrete, Mixed, Unknown",
+  "roofType": "one of: Flat/Built-up, Gable/Shingle, Hip, Mansard, Gambrel, Metal, Rubber membrane, Unknown",
+  "contactAddress": "the property's full address including city, state, zip if available",
+  "tag": "",
+  "source": "Realtor mailing"
+}
+
+Important:
+- Always leave "tag" as an empty string.
+- Always set "source" to "Realtor mailing".
+- For heating/construction/roof, pick the closest match from the options listed. Use "Unknown" if unclear.
+- If multiple buildings or addresses, use the primary/first one.`,
+      });
+
+      const resp = await fetch("/api/anthropic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: userContent }],
+        }),
+      });
+
+      if (!resp.ok) throw new Error(`API error ${resp.status}: ${await resp.text()}`);
+
+      const data = await resp.json();
+      const text = data.content.filter(b => b.type === "text").map(b => b.text).join("");
+      const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+
+      const result = { ...EMPTY_PROPERTY };
+      for (const k of Object.keys(EMPTY_PROPERTY)) {
+        if (AI_SKIP_FIELDS.has(k)) continue;
+        if (parsed[k]) result[k] = parsed[k];
+      }
+
+      setAiExtracted(result);
+      setAiStatus("done");
+      setAiMessage("Extraction complete — review below.");
+    } catch (err) {
+      setAiStatus("error");
+      setAiMessage(err.message || "Something went wrong");
     }
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: PALETTE.bg,
-        color: PALETTE.text,
-        padding: "32px 24px",
-      }}
-    >
-      <div style={{ maxWidth: 860, margin: "0 auto" }}>
-        <header style={{ marginBottom: 28 }}>
-          <h1
-            style={{
-              fontFamily: font,
-              fontSize: 34,
-              margin: 0,
-              color: BRAND.yellow,
-            }}
-          >
+    <div style={{ fontFamily: font, color: c.text, background: c.bg, minHeight: "100vh", padding: "32px 24px", boxSizing: "border-box" }}>
+      <div style={{ maxWidth: 720, margin: "0 auto" }}>
+
+        <div style={{ marginBottom: 32 }}>
+          <h1 style={{ fontFamily: font, fontSize: 26, fontWeight: 700, margin: 0, letterSpacing: "-0.02em", color: brand.yellow }}>
             Lead Intake
           </h1>
-          <p style={{ color: PALETTE.textDim, marginTop: 8, fontSize: 15 }}>
-            Submit one or more properties to Google Sheets with manual entry or
-            AI extraction from offering memos.
+          <p style={{ fontFamily: font, color: c.textDim, margin: "6px 0 0", fontSize: 14 }}>
+            See a building we should be serving?
           </p>
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 10,
-              marginTop: 18,
-              alignItems: "center",
-            }}
-          >
-            <button
-              type="button"
-              style={{
-                ...btnOutline,
-                minWidth: 190,
-                background: isPurging ? PALETTE.inputBg : "transparent",
-              }}
-              onClick={handlePurgeRows}
-              disabled={isPurging}
-            >
-              {isPurging ? "Purging..." : "Purge rows older than 30 days"}
-            </button>
-            {purgeMessage && (
-              <div style={{ color: PALETTE.textDim, fontSize: 13 }}>
-                {purgeMessage}
-              </div>
-            )}
-          </div>
-        </header>
-
-        <div
-          style={{
-            display: "grid",
-            gap: 18,
-            marginBottom: 24,
-            background: PALETTE.card,
-            borderRadius: 16,
-            border: `1px solid ${PALETTE.border}`,
-            padding: 24,
-          }}
-        >
-          <Field label="Your name">
-            <Select
-              value={employeeName}
-              onChange={setEmployeeName}
-              options={EMPLOYEE_NAMES.map((name) => ({
-                value: name,
-                label: name,
-              }))}
-              placeholder="Select your name"
-            />
-          </Field>
-          <Field label="Comment / reason this is a lead">
-            <textarea
-              style={{ ...inputStyle, minHeight: 80, resize: "vertical" }}
-              value={comment}
-              onChange={(event) => setComment(event.target.value)}
-              placeholder="Why is this property worth pursuing?"
-            />
-          </Field>
-          {operationMessage && (
-            <div
-              style={{
-                color: operationMessage.startsWith("Failed")
-                  ? "#f87171"
-                  : BRAND.green,
-                fontSize: 13,
-              }}
-            >
-              {operationMessage}
-            </div>
-          )}
+          <p style={{ fontFamily: font, color: c.textDim, margin: "4px 0 0", fontSize: 14 }}>
+            Please enter as much information as you have.
+          </p>
         </div>
 
-        <div style={{ display: "flex", gap: 10, marginBottom: 22 }}>
-          {[
-            ["manual", "Enter manually"],
-            ["upload", "Upload offering memo"],
-          ].map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              style={{
-                ...(mode === key
-                  ? { ...btnPrimary, background: BRAND.green, color: "#111" }
-                  : btnOutline),
-                flex: 1,
-              }}
-              onClick={() => {
-                setMode(key);
-                setAiStatus(null);
-                setAiExtracted(null);
-                setAiMessage("");
-              }}
-            >
-              {label}
+        <div style={{
+          background: c.card, borderRadius: 10, border: `1px solid ${c.border}`,
+          padding: 20, marginBottom: 20,
+          display: "grid", gridTemplateColumns: "1fr", gap: 16,
+        }}>
+          <Field label="Your name">
+            <Select value={employeeName} onChange={setEmployeeName} options={TEAM} placeholder="Select your name..." />
+          </Field>
+          <Field label="Comment / reason this is a lead">
+            <textarea style={{ ...inputStyle, minHeight: 60, resize: "vertical" }}
+              value={comment} onChange={e => setComment(e.target.value)}
+              placeholder="Why is this property worth pursuing?" />
+          </Field>
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+          {[["manual", "Enter manually"], ["upload", "Upload offering memo"]].map(([key, lbl]) => (
+            <button key={key}
+              style={{ ...(mode === key ? btnPrimary : btnOutline), flex: 1, transition: "all 0.15s" }}
+              onClick={() => switchMode(key)}>
+              {lbl}
             </button>
           ))}
         </div>
 
         {mode === "manual" && (
-          <div
-            style={{
-              background: PALETTE.card,
-              borderRadius: 16,
-              border: `1px solid ${PALETTE.border}`,
-              padding: 24,
-              marginBottom: 24,
-            }}
-          >
-            <div
-              style={{
-                display: "grid",
-                gap: 18,
-                gridTemplateColumns: "1fr 1fr",
-              }}
-            >
+          <div style={{ background: c.card, borderRadius: 10, border: `1px solid ${c.border}`, padding: 20, marginBottom: 20 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <Field label="Address *" style={{ gridColumn: "1 / -1" }}>
-                <input
-                  style={inputStyle}
-                  value={property.address}
-                  onChange={(event) => setField("address")(event.target.value)}
-                  placeholder="123 Main St"
-                />
+                <input style={inputStyle} value={property.address}
+                  onChange={e => set("address")(e.target.value)} placeholder="123 Main St" />
               </Field>
               <Field label="City">
-                <input
-                  style={inputStyle}
-                  value={property.city}
-                  onChange={(event) => setField("city")(event.target.value)}
-                  placeholder="Boston"
-                />
+                <input style={inputStyle} value={property.city}
+                  onChange={e => set("city")(e.target.value)} placeholder="Boston" />
               </Field>
               <Field label="Property name">
-                <input
-                  style={inputStyle}
-                  value={property.propertyName}
-                  onChange={(event) =>
-                    setField("propertyName")(event.target.value)
-                  }
-                />
+                <input style={inputStyle} value={property.propertyName}
+                  onChange={e => set("propertyName")(e.target.value)} />
               </Field>
               <Field label="Units">
-                <input
-                  style={inputStyle}
-                  value={property.units}
-                  onChange={(event) => setField("units")(event.target.value)}
-                  placeholder="24"
-                />
+                <input style={inputStyle} value={property.units}
+                  onChange={e => set("units")(e.target.value)} placeholder="24" />
               </Field>
-              <Field label="Expected Incentive Program?">
-                <Select
-                  value={property.tag}
-                  onChange={setField("tag")}
-                  options={INCENTIVE_OPTIONS}
-                  placeholder="Select incentive program"
-                />
-              </Field>
-              <Field label="Lead source">
-                <Select
-                  value={property.source}
-                  onChange={setField("source")}
-                  options={SOURCE_OPTIONS}
-                  placeholder="Select source"
-                />
+              <Field label="LEAN or MR - your best guess" style={{ gridColumn: "1 / -1" }}>
+                <Select value={property.tag} onChange={set("tag")} options={TAGS} />
               </Field>
             </div>
             <button
-              type="button"
-              style={{
-                ...btnPrimary,
-                marginTop: 24,
-                width: "100%",
-                background: BRAND.green,
-                color: "#fff",
-              }}
-              onClick={handleManualSubmit}
-              disabled={isSubmitting}
-            >
-              🎯 Send it to sales
+              style={{ ...btnPrimary, marginTop: 20, width: "100%", background: brand.green, color: "#1a1a1a" }}
+              onClick={addManualEntry}
+              disabled={!property.address}>
+              🎯 Send it to sales!
             </button>
           </div>
         )}
 
         {mode === "upload" && (
-          <div
-            style={{
-              background: PALETTE.card,
-              borderRadius: 16,
-              border: `1px solid ${PALETTE.border}`,
-              padding: 24,
-              marginBottom: 24,
-            }}
-          >
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".pdf,image/*"
-              style={{ display: "none" }}
-              onChange={handleFileUpload}
-            />
+          <div style={{ background: c.card, borderRadius: 10, border: `1px solid ${c.border}`, padding: 20, marginBottom: 20 }}>
+            <input ref={fileRef} type="file" accept=".pdf,image/*"
+              style={{ display: "none" }} onChange={handleFileUpload} />
 
             {!aiStatus && (
-              <div
-                role="button"
-                onClick={() => fileRef.current?.click()}
-                style={{
-                  cursor: "pointer",
-                  border: `2px dashed ${PALETTE.border}`,
-                  borderRadius: 16,
-                  padding: "48px 24px",
-                  textAlign: "center",
-                }}
-              >
-                <div style={{ fontSize: 34, marginBottom: 10 }}>📄</div>
-                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
-                  Upload an offering memo
-                </div>
-                <div style={{ color: PALETTE.textDim, fontSize: 14 }}>
-                  PDF or image — Claude will extract property data.
-                </div>
+              <div onClick={() => fileRef.current?.click()}
+                style={{ border: `2px dashed ${c.border}`, borderRadius: 8, padding: "40px 20px", textAlign: "center", cursor: "pointer" }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>📄</div>
+                <div style={{ fontFamily: font, fontWeight: 600, marginBottom: 4 }}>Click to upload an offering memo</div>
+                <div style={{ fontFamily: font, fontSize: 13, color: c.textDim }}>PDF or image — Claude will extract property data</div>
               </div>
             )}
 
             {aiStatus === "loading" && (
-              <div style={{ textAlign: "center", padding: 30 }}>
-                <div
-                  style={{
-                    margin: "0 auto 14px",
-                    width: 32,
-                    height: 32,
-                    border: `3px solid ${PALETTE.border}`,
-                    borderTopColor: BRAND.blue,
-                    borderRadius: "50%",
-                    animation: "spin 0.8s linear infinite",
-                  }}
-                />
-                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-                <div style={{ color: PALETTE.textDim }}>{aiMessage}</div>
+              <div style={{ textAlign: "center", padding: 32 }}>
+                <div style={{
+                  width: 32, height: 32, border: `3px solid ${c.border}`,
+                  borderTopColor: brand.blue, borderRadius: "50%",
+                  margin: "0 auto 12px", animation: "spin 0.8s linear infinite",
+                }} />
+                <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+                <div style={{ fontFamily: font, color: c.textDim, fontSize: 14 }}>{aiMessage}</div>
               </div>
             )}
 
             {aiStatus === "error" && (
-              <div style={{ padding: 18 }}>
-                <div style={{ color: "#f87171", marginBottom: 16 }}>
-                  {aiMessage}
-                </div>
-                <button
-                  type="button"
-                  style={btnOutline}
-                  onClick={() => {
-                    setAiStatus(null);
-                    setAiMessage("");
-                    if (fileRef.current) fileRef.current.value = "";
-                  }}
-                >
+              <div style={{ padding: 20 }}>
+                <div style={{ color: "#f87171", fontFamily: font, fontSize: 13, marginBottom: 12 }}>{aiMessage}</div>
+                <button style={btnOutline} onClick={() => { setAiStatus(null); if (fileRef.current) fileRef.current.value = ""; }}>
                   Try again
                 </button>
               </div>
@@ -648,130 +366,109 @@ export default function HomePage() {
 
             {aiStatus === "done" && aiExtracted && (
               <div>
-                <div
-                  style={{
-                    fontWeight: 600,
-                    marginBottom: 16,
-                    color: BRAND.green,
-                  }}
-                >
+                <div style={{ fontFamily: font, fontWeight: 600, marginBottom: 16, color: brand.green }}>
                   ✓ {aiMessage}
                 </div>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 12,
-                    background: PALETTE.inputBg,
-                    padding: 18,
-                    borderRadius: 14,
-                    marginBottom: 18,
-                  }}
-                >
-                  {Object.entries({
-                    "Property name": aiExtracted.propertyName,
-                    Address: aiExtracted.address,
-                    City: aiExtracted.city,
-                    Units: aiExtracted.units,
-                    "Roof type": aiExtracted.roofType,
-                    "Heating type": aiExtracted.heatingType,
-                    "Heating fuel": aiExtracted.heatingFuel,
-                    Construction: aiExtracted.constructionType,
-                    Source: aiExtracted.source,
-                    "Contact address": aiExtracted.contactAddress,
-                  }).map(([label, value]) => (
-                    <div key={label}>
-                      <div style={{ color: PALETTE.textDim, fontSize: 12 }}>
-                        {label}
+                <div style={{
+                  display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8,
+                  background: c.inputBg, borderRadius: 8, padding: 16, marginBottom: 16,
+                  fontSize: 13, fontFamily: font,
+                }}>
+                  {Object.entries(FIELD_MAP).map(([k, lbl]) => {
+                    if (!aiExtracted[k] || AI_SKIP_FIELDS.has(k)) return null;
+                    return (
+                      <div key={k} style={{ padding: "4px 0" }}>
+                        <span style={{ color: c.textDim }}>{lbl}: </span>
+                        <span style={{ fontWeight: 500 }}>{aiExtracted[k]}</span>
                       </div>
-                      <div style={{ fontWeight: 600, marginTop: 4 }}>
-                        {value || "—"}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                {sheetStatus === "error" && (
+                  <div style={{ color: "#f87171", fontSize: 13, fontFamily: font, marginBottom: 12 }}>
+                    {sheetMessage}
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: 10 }}>
                   <button
-                    type="button"
-                    style={{
-                      ...btnPrimary,
-                      flex: 1,
-                      background: BRAND.green,
-                      color: "#111",
-                    }}
-                    onClick={acceptAiData}
-                    disabled={isSubmitting}
-                  >
-                    🎯 Send it to sales
+                    style={{ ...btnPrimary, flex: 1, background: brand.green, color: "#1a1a1a", opacity: sheetStatus === "loading" ? 0.6 : 1 }}
+                    onClick={acceptAiEntry}
+                    disabled={sheetStatus === "loading"}>
+                    {sheetStatus === "loading" ? "Sending..." : "🎯 Send it to sales!"}
                   </button>
-                  <button
-                    type="button"
-                    style={{ ...btnOutline, flex: 1 }}
-                    onClick={() => {
-                      setAiStatus(null);
-                      setAiExtracted(null);
-                      setAiMessage("");
-                      if (fileRef.current) fileRef.current.value = "";
-                    }}
-                  >
+                  <button style={btnOutline}
+                    onClick={() => { setAiStatus(null); setAiExtracted(null); setSheetStatus(null); if (fileRef.current) fileRef.current.value = ""; }}>
                     Discard
                   </button>
                 </div>
+              </div>
+            )}
+
+            {sheetStatus === "done" && !aiExtracted && (
+              <div style={{ textAlign: "center", padding: "28px 20px" }}>
+                <div style={{ color: brand.green, fontFamily: font, fontWeight: 600, fontSize: 15, marginBottom: 16 }}>
+                  ✓ {sheetMessage}
+                </div>
+                <button style={btnOutline} onClick={() => { setSheetStatus(null); setAiStatus(null); }}>
+                  Upload another
+                </button>
               </div>
             )}
           </div>
         )}
 
         {entries.length > 0 && (
-          <div
-            style={{
-              background: PALETTE.card,
-              borderRadius: 16,
-              border: `1px solid ${PALETTE.border}`,
-              padding: 24,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 18,
-              }}
-            >
-              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>
-                Recently sent addresses
+          <div style={{ background: c.card, borderRadius: 10, border: `1px solid ${c.border}`, padding: 20 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12 }}>
+              <h2 style={{ fontFamily: font, fontSize: 16, fontWeight: 600, margin: 0 }}>
+                Batch ({entries.length} {entries.length === 1 ? "property" : "properties"})
               </h2>
-              <span style={{ color: PALETTE.textDim, fontSize: 13 }}>
-                {entries.length} appended
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                {sheetStatus === "error" && (
+                  <span style={{ color: "#f87171", fontSize: 13, fontFamily: font }}>{sheetMessage}</span>
+                )}
+                <button
+                  style={{ ...btnPrimary, background: brand.green, color: "#1a1a1a", opacity: sheetStatus === "loading" ? 0.6 : 1 }}
+                  onClick={sendAllEntries}
+                  disabled={sheetStatus === "loading"}>
+                  {sheetStatus === "loading" ? "Sending..." : "Send all!"}
+                </button>
+              </div>
             </div>
-            <div style={{ display: "grid", gap: 12 }}>
-              {entries.map((entry) => (
-                <div
-                  key={entry.id}
-                  style={{
-                    background: PALETTE.inputBg,
-                    borderRadius: 12,
-                    padding: 16,
-                    display: "grid",
-                    gap: 8,
-                  }}
-                >
-                  <div style={{ fontWeight: 600 }}>
-                    {entry.address || "Untitled property"}
-                  </div>
-                  <div style={{ color: PALETTE.textDim, fontSize: 13 }}>
-                    {entry.city ? `${entry.city} · ` : ""}
-                    {entry.units ? `${entry.units} units · ` : ""}
-                    {entry.tag ? `${entry.tag} · ` : ""}
-                    {entry.source}
-                  </div>
+            {entries.map((ent, i) => (
+              <div key={i} style={{
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                padding: "10px 12px", borderRadius: 6,
+                background: i % 2 ? "transparent" : c.inputBg,
+                fontSize: 13, fontFamily: font,
+              }}>
+                <div>
+                  <span style={{ fontWeight: 600 }}>{ent.address}</span>
+                  {ent.city && <span style={{ color: c.textDim }}>, {ent.city}</span>}
+                  {ent.units && <span style={{ color: c.textDim }}> · {ent.units} units</span>}
+                  {ent.tag && (
+                    <span style={{
+                      marginLeft: 8, fontSize: 11, padding: "2px 8px",
+                      borderRadius: 99, background: `${brand.yellow}22`, color: brand.yellow,
+                    }}>{ent.tag}</span>
+                  )}
                 </div>
-              ))}
-            </div>
+                <button onClick={() => removeEntry(i)}
+                  style={{ background: "none", border: "none", color: c.textDim, cursor: "pointer", fontSize: 16 }}>×</button>
+              </div>
+            ))}
           </div>
         )}
+
+        {entries.length === 0 && sheetStatus === "done" && mode === "manual" && (
+          <div style={{ background: c.card, borderRadius: 10, border: `1px solid ${c.border}`, padding: 24, textAlign: "center" }}>
+            <div style={{ color: brand.green, fontFamily: font, fontWeight: 600, fontSize: 15, marginBottom: 16 }}>
+              ✓ {sheetMessage}
+            </div>
+            <button style={btnOutline} onClick={() => setSheetStatus(null)}>OK</button>
+          </div>
+        )}
+
       </div>
     </div>
   );
