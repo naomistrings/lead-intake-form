@@ -170,22 +170,59 @@ export default function PropertyIntake() {
     }
   }
 
+  async function extractPdfText(file) {
+    const pdfjs = await import("pdfjs-dist");
+    pdfjs.GlobalWorkerOptions.workerSrc =
+      `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjs.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+    const pages = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      pages.push(content.items.map(item => item.str).join(" "));
+    }
+    return pages.join("\n\n");
+  }
+
   async function handleFileUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
     setAiStatus("loading");
-    setAiMessage("Extracting property data...");
+    setAiMessage("Reading document...");
     setAiExtracted(null);
     setSheetStatus(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+      let resp;
 
-      const resp = await fetch("/api/anthropic", {
-        method: "POST",
-        body: formData,
-      });
+      if (isPdf) {
+        setAiMessage("Extracting text from PDF...");
+        const text = await extractPdfText(file);
+
+        if (text.trim().length > 200) {
+          // Text-based PDF — send extracted text (tiny payload)
+          setAiMessage("Analyzing property data...");
+          resp = await fetch("/api/anthropic", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ extractedText: text }),
+          });
+        } else {
+          // Scanned PDF — fall back to vision (binary file)
+          setAiMessage("Scanned PDF detected, using vision...");
+          const formData = new FormData();
+          formData.append("file", file);
+          resp = await fetch("/api/anthropic", { method: "POST", body: formData });
+        }
+      } else {
+        // Image file
+        setAiMessage("Analyzing image...");
+        const formData = new FormData();
+        formData.append("file", file);
+        resp = await fetch("/api/anthropic", { method: "POST", body: formData });
+      }
 
       if (!resp.ok) throw new Error(`API error ${resp.status}: ${await resp.text()}`);
 

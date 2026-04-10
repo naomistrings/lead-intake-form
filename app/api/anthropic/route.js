@@ -1,24 +1,4 @@
-export async function POST(request) {
-  const formData = await request.formData();
-  const file = formData.get("file");
-
-  if (!file) {
-    return Response.json({ error: "No file provided" }, { status: 400 });
-  }
-
-  const bytes = await file.arrayBuffer();
-  const base64 = Buffer.from(bytes).toString("base64");
-  const isPdf = file.type === "application/pdf" || file.name?.toLowerCase().endsWith(".pdf");
-  const mediaType = isPdf ? "application/pdf" : (file.type || "image/jpeg");
-
-  const userContent = [
-    {
-      type: isPdf ? "document" : "image",
-      source: { type: "base64", media_type: mediaType, data: base64 },
-    },
-    {
-      type: "text",
-      text: `You are extracting PROPERTY data from a real estate offering memo for a multifamily property database. Extract only information about the building/property itself — do NOT extract any contact, broker, or company information.
+const EXTRACTION_PROMPT = `You are extracting PROPERTY data from a real estate offering memo for a multifamily property database. Extract only information about the building/property itself — do NOT extract any contact, broker, or company information.
 
 Return ONLY a JSON object (no markdown, no backticks, no explanation) with these exact keys. Use empty string "" for any field you cannot find.
 
@@ -40,9 +20,37 @@ Important:
 - Always leave "tag" as an empty string.
 - Always set "source" to "Realtor mailing".
 - For heating/construction/roof, pick the closest match from the options listed. Use "Unknown" if unclear.
-- If multiple buildings or addresses, use the primary/first one.`,
-    },
-  ];
+- If multiple buildings or addresses, use the primary/first one.`;
+
+export async function POST(request) {
+  const contentType = request.headers.get("content-type") || "";
+  let userContent;
+
+  if (contentType.includes("application/json")) {
+    // Text-based PDF: browser extracted the text, just send it as a text message
+    const { extractedText } = await request.json();
+    userContent = [
+      { type: "text", text: `<document>\n${extractedText}\n</document>\n\n${EXTRACTION_PROMPT}` },
+    ];
+  } else {
+    // Scanned PDF or image: send the file via vision
+    const formData = await request.formData();
+    const file = formData.get("file");
+    if (!file) {
+      return Response.json({ error: "No file provided" }, { status: 400 });
+    }
+    const bytes = await file.arrayBuffer();
+    const base64 = Buffer.from(bytes).toString("base64");
+    const isPdf = file.type === "application/pdf" || file.name?.toLowerCase().endsWith(".pdf");
+    const mediaType = isPdf ? "application/pdf" : (file.type || "image/jpeg");
+    userContent = [
+      {
+        type: isPdf ? "document" : "image",
+        source: { type: "base64", media_type: mediaType, data: base64 },
+      },
+      { type: "text", text: EXTRACTION_PROMPT },
+    ];
+  }
 
   const resp = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
